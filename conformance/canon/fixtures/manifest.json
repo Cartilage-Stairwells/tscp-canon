@@ -1,0 +1,143 @@
+{
+  "manifest_schema_version": "1.1",
+  "canon_version": "1.0",
+  "hash_algorithm": "sha256",
+  "generated_by": "reference_canon.py v1.1.0 (Python, independent oracle)",
+  "test_cases": [
+    {
+      "id": "001_key_sorting",
+      "status": "SUCCESS",
+      "input_file": "inputs/001_key_sorting.json",
+      "expected_output_file": "expected/001_key_sorting.canonical.bin",
+      "expected_sha256": "1662a83ac9cca9b0e609635544a0f7fb81b5b165f40636b856ccedc4f63adc6d",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "002_whitespace_elimination",
+      "status": "SUCCESS",
+      "input_file": "inputs/002_whitespace_elimination.json",
+      "expected_output_file": "expected/002_whitespace_elimination.canonical.bin",
+      "expected_sha256": "bb8cb0322894cbcf73d2bc15a99fa1d3d51f6e88fc946d961ff095b2f80c3d52",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "003_nested_and_array_order",
+      "status": "SUCCESS",
+      "input_file": "inputs/003_nested_and_array_order.json",
+      "expected_output_file": "expected/003_nested_and_array_order.canonical.bin",
+      "expected_sha256": "b469a2de5af0885298d456a92adf95d45978096d8c0d7fe806510eb735ec271d",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "004_unicode_nfc_normalization",
+      "status": "SUCCESS",
+      "input_file": "inputs/004_unicode_nfc_normalization.json",
+      "expected_output_file": "expected/004_unicode_nfc_normalization.canonical.bin",
+      "expected_sha256": "14685c733c68ed083181d1c19592659d5b17b27dbb4839757889e5467cc562db",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "005_scaled_integers",
+      "status": "SUCCESS",
+      "input_file": "inputs/005_scaled_integers.json",
+      "expected_output_file": "expected/005_scaled_integers.canonical.bin",
+      "expected_sha256": "c69d5fa0bbf0277a0732bf311be06c04326281c7658aedbad1248cb61dd57b84",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "006_null_handling",
+      "status": "SUCCESS",
+      "input_file": "inputs/006_null_handling.json",
+      "expected_output_file": "expected/006_null_handling.canonical.bin",
+      "expected_sha256": "ac59b0c0fcf5fe216f56a9cd26942e635c162247ebf86ddb291833aa633f544d",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "007_string_escaping",
+      "status": "SUCCESS",
+      "input_file": "inputs/007_string_escaping.json",
+      "expected_output_file": "expected/007_string_escaping.canonical.bin",
+      "expected_sha256": "a4859b6b284e6fc6774d495161e5d93d97e681b80f5e03ec24c0f51cd14eee3b",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "010_reject_top_level_primitive",
+      "status": "REJECT",
+      "input_file": "inputs/010_reject_top_level_primitive.json",
+      "error_code": "TSCP-CANON-TOPLEVEL-NONMAP",
+      "error_stage": "VALIDATION",
+      "spec": "TSCP-CANON-001 §2.1",
+      "actual_error_message": "top-level input must be a JSON object, got int"
+    },
+    {
+      "id": "011_reject_nfc_collision",
+      "status": "REJECT",
+      "input_file": "inputs/011_reject_nfc_collision.json",
+      "error_code": "TSCP-CANON-KEY-COLLISION",
+      "error_stage": "NORMALIZATION",
+      "spec": "TSCP-CANON-001 §3.1.2",
+      "actual_error_message": "duplicate key after NFC normalization: 'K'"
+    },
+    {
+      "id": "012_string_large_integer_text",
+      "status": "SUCCESS",
+      "input_file": "inputs/012_string_large_integer_text.json",
+      "expected_output_file": "expected/012_string_large_integer_text.canonical.bin",
+      "expected_sha256": "e99f1f1d05883f06b5f3b090f56bb49654c738bbced9231adeeaaf8e31ed9426",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "013_string_scientific_notation_text",
+      "status": "SUCCESS",
+      "input_file": "inputs/013_string_scientific_notation_text.json",
+      "expected_output_file": "expected/013_string_scientific_notation_text.canonical.bin",
+      "expected_sha256": "6fd1c8496054e2b02d0e84d0ca5886dae6c1104eceec6ec7f000081fb1c926ab",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "014_string_negative_looking_text",
+      "status": "SUCCESS",
+      "input_file": "inputs/014_string_negative_looking_text.json",
+      "expected_output_file": "expected/014_string_negative_looking_text.canonical.bin",
+      "expected_sha256": "d3cc2c4166ce2d2aed6a703ada98f2c2abaff69122e6cebb5cffe1ab2ac725bb",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "015_string_unicode_digits_text",
+      "status": "SUCCESS",
+      "input_file": "inputs/015_string_unicode_digits_text.json",
+      "expected_output_file": "expected/015_string_unicode_digits_text.canonical.bin",
+      "expected_sha256": "57c7eacd05b913f89209a7815945b1507283893d8c03a9eef7be7ee483360266",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "016_string_escaped_unicode_digits",
+      "status": "SUCCESS",
+      "input_file": "inputs/016_string_escaped_unicode_digits.json",
+      "expected_output_file": "expected/016_string_escaped_unicode_digits.canonical.bin",
+      "expected_sha256": "cffcb697e0ae8578a6038b9f55e5e567793ac452140f7cf7614e88079e01ab85",
+      "generated_by": "reference_canon.py v1.1.0",
+      "canon_version": "1.0"
+    },
+    {
+      "id": "malformed_float",
+      "status": "REJECT",
+      "input_file": "inputs/malformed_float.json",
+      "error_code": "TSCP-CANON-FLOAT-PROHIBITED",
+      "error_stage": "NUMERIC",
+      "spec": "TSCP-CANON-001 §3.1.3",
+      "actual_error_message": "floats are prohibited in Protocol Objects: 19.99"
+    }
+  ]
+}

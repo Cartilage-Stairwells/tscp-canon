@@ -1,0 +1,14 @@
+[package]
+name = "tscp-canon"
+version = "1.0.0"
+edition = "2021"
+description = "Reference implementation / conformance generator for TSCP-CANON-001 v1.0"
+
+[[bin]]
+name = "tscp-canon"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
+sha2 = "0.10"
+unicode-normalization = "0.1"
