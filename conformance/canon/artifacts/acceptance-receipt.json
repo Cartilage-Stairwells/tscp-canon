@@ -3,8 +3,8 @@
   "canon_version": "1.0",
   "manifest_schema_version": "1.1",
   "module": "tscp-canon-conformance",
-  "git_commit": "2ebf60fa5501c5e71812f73393aaf8686bd7ccb6",
-  "timestamp": "2026-10-20T20:39:17.918781+00:00",
+  "git_commit": "4d333587ffa18971942bf286037a59ecfb6c025d",
+  "timestamp": "2026-10-20T20:39:57.761389+00:00",
   "fixture_count": 15,
   "fixture_digests": {
     "001_key_sorting": "1662a83ac9cca9b0e609635544a0f7fb81b5b165f40636b856ccedc4f63adc6d",
