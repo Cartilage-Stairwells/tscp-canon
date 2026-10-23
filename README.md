@@ -34,4 +34,6 @@ same manifest and writes a fresh receipt only from their observed outputs.
 
 ## License
 
+Copyright 2026 Sean Christopher Southwick.
+
 Apache-2.0. See `LICENSE`.
