@@ -26,8 +26,11 @@ fn verify() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    let manifest: Value = serde_json::from_str(&manifest_text).expect("manifest must be valid JSON");
-    let cases = manifest["test_cases"].as_array().expect("test_cases must be an array");
+    let manifest: Value =
+        serde_json::from_str(&manifest_text).expect("manifest must be valid JSON");
+    let cases = manifest["test_cases"]
+        .as_array()
+        .expect("test_cases must be an array");
 
     let mut failures = 0usize;
     let mut total = 0usize;
@@ -40,13 +43,17 @@ fn verify() -> ExitCode {
         let input_path = root.join(input_file);
         let input_text = fs::read_to_string(&input_path)
             .unwrap_or_else(|e| panic!("cannot read input {:?}: {e}", input_path));
-        let input_value: Value =
-            serde_json::from_str(&input_text).unwrap_or_else(|e| panic!("bad JSON in {:?}: {e}", input_path));
+        let input_value: Value = serde_json::from_str(&input_text)
+            .unwrap_or_else(|e| panic!("bad JSON in {:?}: {e}", input_path));
 
         match status {
             "REJECT" => {
-                let expected_code = case["error_code"].as_str().expect("error_code required for REJECT case");
-                let expected_stage = case["error_stage"].as_str().expect("error_stage required for REJECT case");
+                let expected_code = case["error_code"]
+                    .as_str()
+                    .expect("error_code required for REJECT case");
+                let expected_stage = case["error_stage"]
+                    .as_str()
+                    .expect("error_stage required for REJECT case");
                 match canonicalize_bytes(&input_value) {
                     Ok(_) => {
                         eprintln!("[FAIL] {id}: expected rejection ({expected_code}), but canonicalization SUCCEEDED");
@@ -66,7 +73,9 @@ fn verify() -> ExitCode {
                 }
             }
             _ => {
-                let expected_sha = case["expected_sha256"].as_str().expect("expected_sha256 required");
+                let expected_sha = case["expected_sha256"]
+                    .as_str()
+                    .expect("expected_sha256 required");
                 match canonicalize_bytes(&input_value) {
                     Err(e) => {
                         eprintln!("[FAIL] {id}: canonicalization errored unexpectedly: {e}");
@@ -113,10 +122,18 @@ fn generate() -> ExitCode {
     let mut test_cases = Vec::new();
 
     for input_path in entries {
-        let id = input_path.file_stem().unwrap().to_string_lossy().to_string();
+        let id = input_path
+            .file_stem()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
         let raw = fs::read_to_string(&input_path).expect("read input");
         let value: Value = serde_json::from_str(&raw).expect("parse input json");
-        let file_name = input_path.file_name().unwrap().to_string_lossy().to_string();
+        let file_name = input_path
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
 
         let expect_reject = file_name.starts_with("malformed_")
             || file_name.starts_with("010_reject")
@@ -171,8 +188,11 @@ fn generate() -> ExitCode {
         "test_cases": test_cases,
     });
     let manifest_path = root.join("manifest.rust.json");
-    fs::write(&manifest_path, serde_json::to_string_pretty(&manifest).unwrap() + "\n")
-        .expect("write manifest");
+    fs::write(
+        &manifest_path,
+        serde_json::to_string_pretty(&manifest).unwrap() + "\n",
+    )
+    .expect("write manifest");
     println!("\nWrote {:?}", manifest_path);
     ExitCode::SUCCESS
 }
