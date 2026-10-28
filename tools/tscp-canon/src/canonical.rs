@@ -39,7 +39,13 @@ pub struct CanonError {
 
 impl std::fmt::Display for CanonError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({}): {}", self.code, self.stage.as_str(), self.message)
+        write!(
+            f,
+            "{} ({}): {}",
+            self.code,
+            self.stage.as_str(),
+            self.message
+        )
     }
 }
 
@@ -144,7 +150,11 @@ fn serialize_string(s: &str) -> String {
 fn serialize(value: &Value) -> Result<String, CanonError> {
     match value {
         Value::Null => Ok("null".to_string()),
-        Value::Bool(b) => Ok(if *b { "true".to_string() } else { "false".to_string() }),
+        Value::Bool(b) => Ok(if *b {
+            "true".to_string()
+        } else {
+            "false".to_string()
+        }),
         Value::Number(n) => {
             if number_is_integer_literal(n) {
                 Ok(n.to_string())
