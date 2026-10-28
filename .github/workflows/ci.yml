@@ -81,6 +81,11 @@ jobs:
     needs: [fmt, clippy, test, audit]
     if: always()
     runs-on: ubuntu-latest
+    # This job runs no cargo command; override the workflow-level working
+    # directory so it does not depend on the crate directory existing.
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
     steps:
       - name: Evaluate all gates
         run: |
