@@ -1,12 +1,9 @@
-mod canonical;
-mod hash;
-
-use canonical::{canonicalize_bytes, CANON_VERSION, GENERATOR_NAME, GENERATOR_VERSION};
-use hash::sha256_hex;
 use serde_json::Value;
 use std::fs;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use tscp_canon::canonical::{canonicalize_bytes, CANON_VERSION, GENERATOR_NAME, GENERATOR_VERSION};
+use tscp_canon::hash::sha256_hex;
 
 fn fixtures_root() -> PathBuf {
     if let Ok(p) = std::env::var("FIXTURES_ROOT") {
