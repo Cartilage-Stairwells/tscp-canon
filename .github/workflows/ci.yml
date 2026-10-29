@@ -13,6 +13,12 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
 
+# The Rust crate lives in tools/tscp-canon/; without this every cargo
+# invocation runs at the repo root, cannot find Cargo.toml, and fails.
+defaults:
+  run:
+    working-directory: tools/tscp-canon
+
 jobs:
   fmt:
     name: Formatting (cargo fmt)
@@ -24,6 +30,8 @@ jobs:
           toolchain: nightly
           components: rustfmt
       - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: tools/tscp-canon
       - run: cargo fmt --all -- --check
 
   clippy:
@@ -36,6 +44,8 @@ jobs:
           toolchain: nightly
           components: clippy
       - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: tools/tscp-canon
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
   test:
@@ -48,6 +58,8 @@ jobs:
         with:
           toolchain: nightly
       - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: tools/tscp-canon
       - name: Run tests (AVX-512 conditional)
         run: |
           if grep -q "avx512" /proc/cpuinfo 2>/dev/null; then
@@ -69,6 +81,11 @@ jobs:
     needs: [fmt, clippy, test, audit]
     if: always()
     runs-on: ubuntu-latest
+    # This job runs no cargo command; override the workflow-level working
+    # directory so it does not depend on the crate directory existing.
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
     steps:
       - name: Evaluate all gates
         run: |
