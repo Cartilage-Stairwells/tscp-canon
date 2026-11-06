@@ -235,3 +235,41 @@ def test_docstring_matches_behaviour():
     assert "writes nothing" not in lowered, "docstring still claims it writes nothing"
     for token in ("temporary file", "on fail", "acceptance-receipt.failed.json", "exit status"):
         assert token in lowered, f"docstring does not document {token!r}"
+
+
+def test_fail_run_writes_only_the_diagnostic_file(tmp_path):
+    """A failing run may write the diagnostic, and must write nothing else there.
+
+    This pins the exact shape of the FAIL path: exactly one new file in the
+    artifacts directory, and it is not the receipt of record. Without this, a
+    future "fix" could quietly start writing a second file beside the evidence.
+    """
+    box = build_sandbox(tmp_path, python_passed=15, rust="missing", ts="missing")
+    artifacts = (box / RECEIPT_REL).parent
+    before = {p.name: sha256(p) for p in artifacts.iterdir() if p.is_file()}
+
+    proc = run_generator(box, fake_npx=False)
+    assert proc.returncode != 0
+
+    after = {p.name: sha256(p) for p in artifacts.iterdir() if p.is_file()}
+    changed = {n for n in before if after.get(n) != before[n]}
+    added = set(after) - set(before)
+    assert changed == set(), f"existing artifact files were modified: {sorted(changed)}"
+    assert added == {FAILED_REL.name}, f"unexpected files written on FAIL: {sorted(added)}"
+    assert_no_temp_files(box)
+
+
+def test_docstring_does_not_overclaim_what_the_fail_path_touches():
+    """The docstring is a claim about behaviour; it must not contradict the code.
+
+    Regression on a real defect: the write-policy docstring said "nothing under
+    ``conformance/canon/artifacts/`` is written or replaced" on FAIL, while the
+    FAIL branch writes acceptance-receipt.failed.json in exactly that directory.
+    A docstring that overclaims is how the original "writes nothing" bug survived.
+    """
+    text = (REPO_ROOT / GENERATOR).read_text(encoding="utf-8")
+    doc = text.split('"""')[1].lower()
+    assert "nothing under ``conformance/canon/artifacts/``" not in doc, (
+        "docstring claims nothing is written under the artifacts directory, "
+        "but the FAIL branch writes acceptance-receipt.failed.json there"
+    )

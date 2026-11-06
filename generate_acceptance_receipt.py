@@ -13,13 +13,16 @@ Write policy (this is the whole point of the script, so it is stated exactly):
 * On PASS the receipt is rendered to a temporary file next to the artifact and
   atomically renamed over ``acceptance-receipt.json``. A reader therefore only
   ever sees a complete receipt, never a truncated one.
-* On FAIL nothing under ``conformance/canon/artifacts/`` is written or replaced.
-  The committed receipt is evidence of a passing run. A failing run on a host
-  that is missing a toolchain, or that has a broken implementation, is a report
-  about *that host*, not new evidence about the artifact, so it must not be
-  able to destroy another machine's PASS. Instead the failing receipt is written
-  to a separate, git-ignored path (``acceptance-receipt.failed.json``) purely for
-  diagnosis, and the full receipt is still printed to stdout.
+* On FAIL the committed receipt ``acceptance-receipt.json`` is neither opened
+  nor replaced, so its bytes and its sha256 are identical before and after a
+  failing run. The committed receipt is evidence of a passing run. A failing run
+  on a host that is missing a toolchain, or that has a broken implementation, is
+  a report about *that host*, not new evidence about the artifact, so it must not
+  be able to destroy another machine's PASS. A failing run writes exactly one
+  file, the git-ignored diagnostic ``acceptance-receipt.failed.json`` in the same
+  ``conformance/canon/artifacts/`` directory (that name is not the evidence path
+  and no reader treats it as a receipt of record); the full receipt is also
+  printed to stdout.
 * Either way the process exit status is 0 only when all three implementations
   report a full pass, so CI and callers can gate on it.
 
