@@ -76,9 +76,26 @@ jobs:
       - uses: taiki-e/install-action@cargo-audit
       - run: cargo audit
 
+  receipt-write-policy:
+    name: Receipt write policy (py)
+    runs-on: ubuntu-latest
+    # The acceptance-receipt generator must never replace a committed PASS with a
+    # FAIL just because this host lacks a toolchain. This job pins that behaviour
+    # with a hermetic test (stubbed legs, no cargo/node needed).
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pytest
+      - run: python -m pytest tests/test_receipt_write_policy.py -v
+
   verify:
     name: Verification Seal
-    needs: [fmt, clippy, test, audit]
+    needs: [fmt, clippy, test, audit, receipt-write-policy]
     if: always()
     runs-on: ubuntu-latest
     # This job runs no cargo command; override the workflow-level working
@@ -92,7 +109,8 @@ jobs:
           if [ "${{ needs.fmt.result }}" = "success" ] && \
              [ "${{ needs.clippy.result }}" = "success" ] && \
              [ "${{ needs.test.result }}" = "success" ] && \
-             [ "${{ needs.audit.result }}" = "success" ]; then
+             [ "${{ needs.audit.result }}" = "success" ] && \
+             [ "${{ needs.receipt-write-policy.result }}" = "success" ]; then
             echo "TSCP VERIFICATION PREDICATE: PASS"
           else
             echo "TSCP VERIFICATION PREDICATE: FAIL"

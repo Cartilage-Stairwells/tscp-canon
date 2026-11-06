@@ -6,10 +6,25 @@ This script does NOT compute or assert pass/fail itself. It runs each of
 the three reference implementations as a real subprocess, captures their
 actual stdout, parses the "N / M cases passed" line each one prints, and
 only emits a receipt with conformance: "PASS" if all three independently
-report full pass against the same manifest.json. If any implementation is
-missing, fails to build, or reports a failure, the script exits non-zero
-and writes nothing — there is no code path that produces a PASS receipt
-without three real, fresh execution results backing it.
+report full pass against the same manifest.json.
+
+Write policy (this is the whole point of the script, so it is stated exactly):
+
+* On PASS the receipt is rendered to a temporary file next to the artifact and
+  atomically renamed over ``acceptance-receipt.json``. A reader therefore only
+  ever sees a complete receipt, never a truncated one.
+* On FAIL nothing under ``conformance/canon/artifacts/`` is written or replaced.
+  The committed receipt is evidence of a passing run. A failing run on a host
+  that is missing a toolchain, or that has a broken implementation, is a report
+  about *that host*, not new evidence about the artifact, so it must not be
+  able to destroy another machine's PASS. Instead the failing receipt is written
+  to a separate, git-ignored path (``acceptance-receipt.failed.json``) purely for
+  diagnosis, and the full receipt is still printed to stdout.
+* Either way the process exit status is 0 only when all three implementations
+  report a full pass, so CI and callers can gate on it.
+
+There is no code path that produces a PASS receipt without three real, fresh
+execution results backing it.
 """
 import json
 import re
@@ -137,13 +152,35 @@ def main():
 
     ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
     receipt_path = ARTIFACTS_DIR / "acceptance-receipt.json"
-    receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    rendered = json.dumps(receipt, indent=2) + "\n"
+
+    if all_pass:
+        # Promote through a temporary file so a reader never sees a partial receipt.
+        tmp_path = receipt_path.with_name(receipt_path.name + ".tmp")
+        try:
+            tmp_path.write_text(rendered, encoding="utf-8")
+            tmp_path.replace(receipt_path)
+        finally:
+            if tmp_path.exists():
+                tmp_path.unlink()
+        written_path = receipt_path
+        print(f"\nWrote {written_path}")
+    else:
+        # Never touch the committed artifact on failure: it is evidence of a PASS.
+        failure_path = ARTIFACTS_DIR / "acceptance-receipt.failed.json"
+        failure_path.write_text(rendered, encoding="utf-8")
+        written_path = failure_path
+        kept = "left intact" if receipt_path.exists() else "absent (nothing to keep)"
+        print(
+            f"\nFAILED run: {receipt_path.name} {kept}; "
+            f"diagnostic receipt written to {failure_path}",
+            file=sys.stderr,
+        )
 
     print(f"\n{'='*60}")
     print(json.dumps(receipt, indent=2))
     print(f"{'='*60}")
-    print(f"\nWrote {receipt_path}")
-    print(f"conformance: {receipt['conformance']}")
+    print(f"\nconformance: {receipt['conformance']}")
 
     return 0 if all_pass else 1
 

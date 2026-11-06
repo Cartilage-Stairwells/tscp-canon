@@ -4,3 +4,8 @@ target/
 *.tar.gz
 *.tar
 .DS_Store
+# Diagnostic output of a failing receipt run (never the atomically-promoted PASS artifact)
+conformance/canon/artifacts/acceptance-receipt.failed.json
+conformance/canon/artifacts/*.tmp
+__pycache__/
+.pytest_cache/

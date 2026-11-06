@@ -32,6 +32,13 @@ python3 generate_acceptance_receipt.py
 The acceptance script runs the Python, Rust, and TypeScript implementations against the
 same manifest and writes a fresh receipt only from their observed outputs.
 
+It does not overwrite the committed receipt on a failing run: the artifact is evidence of a
+passing run, so a host missing a toolchain (or carrying a broken implementation) gets its
+failing receipt at `conformance/canon/artifacts/acceptance-receipt.failed.json` and a non-zero
+exit, while `acceptance-receipt.json` is left byte-identical. A passing run is written through
+a temporary file and atomically renamed over the artifact. `tests/test_receipt_write_policy.py`
+pins both branches.
+
 ## License
 
 Copyright 2026 Sean Christopher Southwick.
