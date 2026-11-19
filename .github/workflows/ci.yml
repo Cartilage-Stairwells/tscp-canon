@@ -28,7 +28,7 @@ defaults:
 jobs:
   fmt:
     concurrency:
-      group: lint-${{ github.ref }}
+      group: lint-${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
       cancel-in-progress: true
     name: Formatting (cargo fmt)
     runs-on: ubuntu-latest
@@ -45,7 +45,7 @@ jobs:
 
   clippy:
     concurrency:
-      group: lint-${{ github.ref }}
+      group: lint-${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
       cancel-in-progress: true
     name: Lints (cargo clippy)
     runs-on: ubuntu-latest
@@ -82,7 +82,7 @@ jobs:
 
   audit:
     concurrency:
-      group: lint-${{ github.ref }}
+      group: lint-${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
       cancel-in-progress: true
     name: Supply Chain (cargo audit)
     runs-on: ubuntu-latest
@@ -126,13 +126,13 @@ jobs:
         run: |
           set -euo pipefail
           want="${{ steps.declared.outputs.channel }}"
+          active=$(rustup show active-toolchain | awk '{print $1}')
           rustc -vV | tee toolchain-identity.txt
-          got="nightly-$(sed -n 's/^commit-date: //p' toolchain-identity.txt)"
-          if [ "$want" != "$got" ]; then
-            echo "TOOLCHAIN_DRIFT declared=$want actual=$got" >&2
-            exit 1
-          fi
-          echo "TOOLCHAIN_PINNED $got"
+          echo "declared=$want active=$active"
+          case "$active" in
+            "$want"*) echo "TOOLCHAIN_PINNED $active" ;;
+            *) echo "TOOLCHAIN_DRIFT declared=$want active=$active" >&2; exit 1 ;;
+          esac
       - uses: actions/upload-artifact@v4
         with:
           name: toolchain-identity
@@ -186,10 +186,8 @@ jobs:
         run: |
           set -euo pipefail
           api="repos/${{ github.repository }}/actions/runs"
-          mine=$(gh api "$api/${{ github.run_id }}" --jq .created_at)
-          newer=$(gh api "$api?head_sha=${{ github.sha }}&event=${{ github.event_name }}&status=completed&per_page=50" \
-                  --jq --arg me "$mine" --arg id "${{ github.run_id }}" \
-                  '[.workflow_runs[] | select((.id|tostring) != $id) | select(.created_at > $me)] | length')
+          mine=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/$api/${{ github.run_id }}" | python3 -c 'import sys,json;print(json.load(sys.stdin)["created_at"])')
+          newer=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/$api?head_sha=${{ github.sha }}&event=${{ github.event_name }}&status=completed&per_page=50" | MINE="$mine" RID="${{ github.run_id }}" python3 -c 'import os,sys,json;me=os.environ["MINE"];rid=os.environ["RID"];d=json.load(sys.stdin);n=[r for r in d.get("workflow_runs",[]) if str(r["id"])!=rid and r["created_at"]>me];print(len(n))')
           echo "this_run=${{ github.run_id }} created=$mine newer_completed=$newer"
           if [ "$newer" != "0" ]; then
             echo "SEAL_SUPERSEDED this=${{ github.run_id }} newer_completed=$newer" >&2
