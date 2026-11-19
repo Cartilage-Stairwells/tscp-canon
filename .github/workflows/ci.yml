@@ -6,9 +6,15 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
+# T5: a cancelled run is not admissible evidence. The workflow no longer
+# cancels in flight; only the three cheap jobs opt in at job level.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
 
 env:
   CARGO_TERM_COLOR: always
@@ -21,13 +27,16 @@ defaults:
 
 jobs:
   fmt:
+    concurrency:
+      group: lint-${{ github.ref }}
+      cancel-in-progress: true
     name: Formatting (cargo fmt)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc
         with:
-          toolchain: nightly
+          toolchain: nightly-2026-11-19
           components: rustfmt
       - uses: swatinem/rust-cache@v2
         with:
@@ -35,13 +44,16 @@ jobs:
       - run: cargo fmt --all -- --check
 
   clippy:
+    concurrency:
+      group: lint-${{ github.ref }}
+      cancel-in-progress: true
     name: Lints (cargo clippy)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc
         with:
-          toolchain: nightly
+          toolchain: nightly-2026-11-19
           components: clippy
       - uses: swatinem/rust-cache@v2
         with:
@@ -54,9 +66,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc
         with:
-          toolchain: nightly
+          toolchain: nightly-2026-11-19
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: tools/tscp-canon
@@ -69,6 +81,9 @@ jobs:
           fi
 
   audit:
+    concurrency:
+      group: lint-${{ github.ref }}
+      cancel-in-progress: true
     name: Supply Chain (cargo audit)
     runs-on: ubuntu-latest
     steps:
@@ -93,9 +108,98 @@ jobs:
       - run: python -m pip install --upgrade pytest
       - run: python -m pytest tests/test_receipt_write_policy.py -v
 
+  toolchain-pin:
+    name: Toolchain pin (T4)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve declared channel
+        id: declared
+        run: echo "channel=$(grep -oP 'channel\s*=\s*"\K[^"]+' rust-toolchain.toml)" >> "$GITHUB_OUTPUT"
+      - uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc
+        with:
+          toolchain: ${{ steps.declared.outputs.channel }}
+      - name: Assert resolved compiler matches declaration
+        run: |
+          set -euo pipefail
+          want="${{ steps.declared.outputs.channel }}"
+          rustc -vV | tee toolchain-identity.txt
+          got="nightly-$(sed -n 's/^commit-date: //p' toolchain-identity.txt)"
+          if [ "$want" != "$got" ]; then
+            echo "TOOLCHAIN_DRIFT declared=$want actual=$got" >&2
+            exit 1
+          fi
+          echo "TOOLCHAIN_PINNED $got"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: toolchain-identity
+          path: toolchain-identity.txt
+
+  conformance:
+    name: Three-language conformance (F09)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      # T2: a missing toolchain must fail loudly and name itself, so a path error
+      # can never be mistaken for an absent toolchain.
+      - name: Probe required toolchains
+        run: |
+          set -euo pipefail
+          for t in python3 node npm; do
+            if ! command -v "$t" >/dev/null 2>&1; then
+              echo "TOOLCHAIN_MISSING $t" >&2
+              exit 1
+            fi
+          done
+      - uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc
+        with:
+          toolchain: nightly-2026-11-19
+      - name: Python oracle verifies the committed manifest
+        run: python3 reference_canon.py verify
+      - name: TypeScript implementation against the same manifest
+        working-directory: triune-handoff-ts
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npx ts-node scripts/run_conformance.ts
+      - name: Rust implementation against the same manifest
+        working-directory: tools/tscp-canon
+        run: cargo test --test conformance -- --nocapture
+
+  authority:
+    name: Seal authority (T5)
+    needs: [conformance]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    steps:
+      - name: Reject a superseded seal
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          api="repos/${{ github.repository }}/actions/runs"
+          mine=$(gh api "$api/${{ github.run_id }}" --jq .created_at)
+          newer=$(gh api "$api?head_sha=${{ github.sha }}&event=${{ github.event_name }}&status=completed&per_page=50" \
+                  --jq --arg me "$mine" --arg id "${{ github.run_id }}" \
+                  '[.workflow_runs[] | select((.id|tostring) != $id) | select(.created_at > $me)] | length')
+          echo "this_run=${{ github.run_id }} created=$mine newer_completed=$newer"
+          if [ "$newer" != "0" ]; then
+            echo "SEAL_SUPERSEDED this=${{ github.run_id }} newer_completed=$newer" >&2
+            exit 1
+          fi
+          echo "SEAL_AUTHORITATIVE ${{ github.run_id }}"
+
   verify:
     name: Verification Seal
-    needs: [fmt, clippy, test, audit, receipt-write-policy]
+    needs: [fmt, clippy, test, audit, receipt-write-policy, toolchain-pin, conformance, authority]
     if: always()
     runs-on: ubuntu-latest
     # This job runs no cargo command; override the workflow-level working
@@ -110,7 +214,10 @@ jobs:
              [ "${{ needs.clippy.result }}" = "success" ] && \
              [ "${{ needs.test.result }}" = "success" ] && \
              [ "${{ needs.audit.result }}" = "success" ] && \
-             [ "${{ needs.receipt-write-policy.result }}" = "success" ]; then
+             [ "${{ needs.receipt-write-policy.result }}" = "success" ] && \
+             [ "${{ needs.toolchain-pin.result }}" = "success" ] && \
+             [ "${{ needs.conformance.result }}" = "success" ] && \
+             [ "${{ needs.authority.result }}" = "success" ]; then
             echo "TSCP VERIFICATION PREDICATE: PASS"
           else
             echo "TSCP VERIFICATION PREDICATE: FAIL"
