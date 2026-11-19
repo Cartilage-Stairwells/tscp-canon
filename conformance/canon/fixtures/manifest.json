@@ -9,7 +9,7 @@
       "status": "SUCCESS",
       "input_file": "inputs/001_key_sorting.json",
       "expected_output_file": "expected/001_key_sorting.canonical.bin",
-      "expected_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "expected_sha256": "1662a83ac9cca9b0e609635544a0f7fb81b5b165f40636b856ccedc4f63adc6d",
       "generated_by": "reference_canon.py v1.1.0",
       "canon_version": "1.0"
     },
@@ -73,7 +73,7 @@
       "input_file": "inputs/010_reject_top_level_primitive.json",
       "error_code": "TSCP-CANON-TOPLEVEL-NONMAP",
       "error_stage": "VALIDATION",
-      "spec": "TSCP-CANON-001 \u00a72.1",
+      "spec": "TSCP-CANON-001 §2.1",
       "actual_error_message": "top-level input must be a JSON object, got int"
     },
     {
@@ -82,7 +82,7 @@
       "input_file": "inputs/011_reject_nfc_collision.json",
       "error_code": "TSCP-CANON-KEY-COLLISION",
       "error_stage": "NORMALIZATION",
-      "spec": "TSCP-CANON-001 \u00a73.1.2",
+      "spec": "TSCP-CANON-001 §3.1.2",
       "actual_error_message": "duplicate key after NFC normalization: 'K'"
     },
     {
@@ -136,7 +136,7 @@
       "input_file": "inputs/malformed_float.json",
       "error_code": "TSCP-CANON-FLOAT-PROHIBITED",
       "error_stage": "NUMERIC",
-      "spec": "TSCP-CANON-001 \u00a73.1.3",
+      "spec": "TSCP-CANON-001 §3.1.3",
       "actual_error_message": "floats are prohibited in Protocol Objects: 19.99"
     }
   ]
