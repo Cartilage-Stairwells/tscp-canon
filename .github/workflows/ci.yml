@@ -28,7 +28,7 @@ defaults:
 jobs:
   fmt:
     concurrency:
-      group: lint-${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+      group: lint-fmt-${{ github.ref }}
       cancel-in-progress: true
     name: Formatting (cargo fmt)
     runs-on: ubuntu-latest
@@ -45,7 +45,7 @@ jobs:
 
   clippy:
     concurrency:
-      group: lint-${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+      group: lint-clippy-${{ github.ref }}
       cancel-in-progress: true
     name: Lints (cargo clippy)
     runs-on: ubuntu-latest
@@ -82,7 +82,7 @@ jobs:
 
   audit:
     concurrency:
-      group: lint-${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+      group: lint-audit-${{ github.ref }}
       cancel-in-progress: true
     name: Supply Chain (cargo audit)
     runs-on: ubuntu-latest
