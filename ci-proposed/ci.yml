@@ -163,6 +163,8 @@ jobs:
       - name: Probe required toolchains
         run: |
           set -euo pipefail
+          # NO-TOOL TEST: simulate a runner image with no toolchains at all.
+          export PATH=/nonexistent
           for t in python3 node npm; do
             if ! command -v "$t" >/dev/null 2>&1; then
               echo "TOOLCHAIN_MISSING $t" >&2
