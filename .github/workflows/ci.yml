@@ -214,7 +214,7 @@ jobs:
               | select(.workflow_id == $wf)
               | select((.id | tostring) != $id)
               | select(.head_sha == $sha and .event == $event)
-              | select(.status == "completed" and .created_at > $me)] | length' authority-runs.json)
+              | select(.created_at > $me)] | length' authority-runs.json)
           echo "this_run=$GITHUB_RUN_ID workflow=$wf created=$mine newer_completed=$newer"
           if [ "$newer" != "0" ]; then
             echo "SEAL_SUPERSEDED this=$GITHUB_RUN_ID newer_completed=$newer" >&2
