@@ -1,0 +1,8 @@
+# Single source of truth for the compiler that produces a seal.
+# A dated channel, never the floating `nightly` alias: an advancing nightly
+# changes codegen and lints, which voids any red/green comparison taken across
+# days. Resolve a new date deliberately, in its own commit.
+[toolchain]
+channel = "nightly-2026-11-19"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
