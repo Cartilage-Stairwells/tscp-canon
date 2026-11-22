@@ -72,7 +72,7 @@ jobs:
       # the seal red for reasons unrelated to the commit. Hardware-specific
       # coverage belongs to the avx512 repository, not to this predicate.
       - name: Run tests
-        run: cargo test --workspace --release
+        run: cargo test --locked --workspace --release
 
   audit:
     name: Supply Chain (cargo audit)
@@ -184,7 +184,7 @@ jobs:
           npx --no-install ts-node scripts/run_conformance.ts
       - name: Rust implementation against the same manifest
         working-directory: tools/tscp-canon
-        run: cargo test --test conformance -- --nocapture
+        run: cargo test --locked --test conformance -- --nocapture
 
   authority:
     name: Seal authority (T5)
